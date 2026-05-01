@@ -72,7 +72,7 @@ module.exports = (eleventyConfig) => {
 				lqipDataURIs[key] = `data:image/jpeg;base64,${lqipBuffer.toString('base64')}`;
 			}
 
-			// generate 6 source tags
+			// generate six source tags
 			// TODO: rewrite forEach loop using map() and join()
 			let sourceList = '';
 			metadataKeys.forEach((key) => {
