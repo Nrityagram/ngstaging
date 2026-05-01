@@ -1,5 +1,8 @@
 const path = require("path");
+const fs = require("fs");
 const eleventyImage = require("@11ty/eleventy-img");
+
+let imageCounter = 0;
 
 module.exports = eleventyConfig => {
 	function relativeToInputPath(inputPath, relativeFilePath) {
@@ -28,19 +31,29 @@ module.exports = eleventyConfig => {
 		let metadata = await eleventyImage(url, {
 			widths: widths || [ "auto" ],
 			formats,
-			outputDir: path.join(eleventyConfig.dir.output, "img"), // Advanced usage note: `eleventyConfig.dir` works here because we’re using addPlugin.
+			outputDir: path.join(eleventyConfig.dir.output, "img"), // Advanced usage note: `eleventyConfig.dir` works here because we're using addPlugin.
 			urlPath: "/img/",
 		});
 
-		// console.log(JSON.stringify(metadata, null, 2));
+		const lqipMeta = await eleventyImage(url, {
+			widths: [16],
+			formats: ["jpeg"],
+			sharpJpegOptions: { quality: 60 },
+			outputDir: path.join(eleventyConfig.dir.output, "img"),
+			urlPath: "/img/",
+		});
+		const lqipBuffer = fs.readFileSync(lqipMeta.jpeg[0].outputPath);
+		const lqipDataURI = `data:image/jpeg;base64,${lqipBuffer.toString("base64")}`;
 
-		// TODO fetchpriority=high
-		let imageAttributes = {
-			alt,
-			sizes,
-			loading: loadingOption,
-			decoding: "async",
-		};
-		return eleventyImage.generateHTML(metadata, imageAttributes);
+		const imageData = metadata[formats[0]];
+		const lastImage = imageData[imageData.length - 1];
+		const srcset = imageData.map(img => `${img.url} ${img.width}w`).join(", ");
+		const uid = `pw-${++imageCounter}`;
+
+		const sourceElem = `<source type="image/${formats[0]}" srcset="${srcset}" sizes="${sizes}">`;
+		const imgElem = `<img alt="${alt}" loading="${loadingOption}" decoding="async" src="${lastImage.url}" width="${lastImage.width}" height="${lastImage.height}" onload="this.closest('.picture-wrap').classList.add('loaded')">`;
+		const lqipStyle = `<style>#${uid}::before{background-image:url('${lqipDataURI}');}</style>`;
+
+		return `${lqipStyle}<div id="${uid}" class="picture-wrap"><picture>${sourceElem}${imgElem}</picture></div>`;
 	});
 };
