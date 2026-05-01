@@ -5,6 +5,27 @@
     container-type: inline-size;
 }
 
+.picture-wrap {
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        filter: blur(20px);
+        transform: scale(1.05);
+        transition: opacity 0.5s ease;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    &.loaded::before {
+        opacity: 0;
+    }
+}
+
 #banner-container .banner-image {
     position: absolute;
     top: 0;

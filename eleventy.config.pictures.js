@@ -1,5 +1,8 @@
 const path = require('path');
+const fs = require('fs');
 const eleventyImage = require('@11ty/eleventy-img');
+
+let pictureCounter = 0;
 
 module.exports = (eleventyConfig) => {
 	function relativeToInputPath(inputPath, relativeFilePath) {
@@ -46,6 +49,7 @@ module.exports = (eleventyConfig) => {
 
 			let metadatalist = {};
 			let metadataKeys = ['desk', 'tab', 'mob'];
+			let lqipDataURIs = {};
 
 			for (const key of metadataKeys) {
 				metadatalist[key] = await eleventyImage(srclist[key], {
@@ -56,9 +60,19 @@ module.exports = (eleventyConfig) => {
 					outputDir: path.join(eleventyConfig.dir.output, 'img'),
 					urlPath: '/img/',
 				});
+
+				const lqipMeta = await eleventyImage(srclist[key], {
+					widths: [16],
+					formats: ['jpeg'],
+					sharpJpegOptions: { quality: 60 },
+					outputDir: path.join(eleventyConfig.dir.output, 'img'),
+					urlPath: '/img/',
+				});
+				const lqipBuffer = fs.readFileSync(lqipMeta.jpeg[0].outputPath);
+				lqipDataURIs[key] = `data:image/jpeg;base64,${lqipBuffer.toString('base64')}`;
 			}
 
-			// generate 6 source tags
+			// generate six source tags
 			// TODO: rewrite forEach loop using map() and join()
 			let sourceList = '';
 			metadataKeys.forEach((key) => {
@@ -72,9 +86,12 @@ module.exports = (eleventyConfig) => {
 
 			// create img string with webp from mobile
 			let imgData = metadatalist[metadataKeys.slice(-1)][formats[0]][0];
-			let imgElem = `<img src="${imgData.url}" width="${imgData.width}" height="${imgData.height}" alt="${alt}" fetchPriority="${fetchPriorityOption}" loading="${loadingOption}" class="${imgClass}"/>`;
+			const uid = `pw-${++pictureCounter}`;
+			let imgElem = `<img src="${imgData.url}" width="${imgData.width}" height="${imgData.height}" alt="${alt}" fetchPriority="${fetchPriorityOption}" loading="${loadingOption}" class="${imgClass}" onload="this.closest('.picture-wrap').classList.add('loaded')"/>`;
 
-			return `<picture>${sourceList}${imgElem}</picture>`;
+			const lqipStyle = `<style>#${uid}::before{background-image:url('${lqipDataURIs.mob}');}@media(min-width:${screenwidths.tab}){#${uid}::before{background-image:url('${lqipDataURIs.tab}');}}@media(min-width:${screenwidths.desk}){#${uid}::before{background-image:url('${lqipDataURIs.desk}');}}</style>`;
+
+			return `${lqipStyle}<div id="${uid}" class="picture-wrap"><picture>${sourceList}${imgElem}</picture></div>`;
 		},
 	);
 };
