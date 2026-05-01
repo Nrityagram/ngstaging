@@ -46,8 +46,10 @@ nobanner: true
 
             <!-- Years of Training -->
             <div class="rf-group">
-              <label for="rf-years-of-training">Years of Training <span class="rf-required">•</span></label>
-              <input type="number" id="rf-years-of-training" name="yearsOfTraining" required>
+              <label for="rf-years-of-training">Years of Training <span class="rf-required">•</span><br />
+                <span class="desc">Applicants should have a minimum of 10 years of training.</span>
+              </label>
+              <input type="number" id="rf-years-of-training" name="yearsOfTraining" min="10" required>
             </div>
 
             <!-- Current Occupation -->
@@ -483,7 +485,7 @@ nobanner: true
 
           if (!validateRequired()) {
             var firstError = form.querySelector(".rf-field-error");
-            if (firstError)
+            if (firstError) 
               firstError.scrollIntoView({behavior: "smooth", block: "center"});
             return;
           }
@@ -570,7 +572,9 @@ nobanner: true
             payload.extraInfo = form.extraInfo.value;
 
             // Turnstile token
-            payload['cf-turnstile-response'] = form.querySelector('[name="cf-turnstile-response"]').value;
+            payload['cf-turnstile-response'] = form
+              .querySelector('[name="cf-turnstile-response"]')
+              .value;
 
             // File as base64
             if (fileInput.files.length > 0) {
@@ -593,7 +597,11 @@ nobanner: true
             });
 
             if (!response.ok) {
-              var errData = await response.json().catch(function () { return {}; });
+              var errData = await response
+                .json()
+                .catch(function () {
+                  return {};
+                });
               throw new Error(errData.error || "Submission failed. Please try again.");
             }
 
